@@ -13,8 +13,8 @@ fn all_check_all_range() {
     };
 
     let tree_config = TreeConfig {
-        starting_pot: 60,
-        effective_stack: 970,
+        starting_pot: 60.0,
+        effective_stack: 970.0,
         ..Default::default()
     };
 
@@ -105,8 +105,8 @@ fn one_raise_all_range() {
     };
 
     let tree_config = TreeConfig {
-        starting_pot: 60,
-        effective_stack: 970,
+        starting_pot: 60.0,
+        effective_stack: 970.0,
         river_bet_sizes: [("50%", "").try_into().unwrap(), Default::default()],
         ..Default::default()
     };
@@ -210,8 +210,8 @@ fn one_raise_all_range_compressed() {
     };
 
     let tree_config = TreeConfig {
-        starting_pot: 60,
-        effective_stack: 970,
+        starting_pot: 60.0,
+        effective_stack: 970.0,
         river_bet_sizes: [("50%", "").try_into().unwrap(), Default::default()],
         ..Default::default()
     };
@@ -317,8 +317,8 @@ fn one_raise_all_range_with_turn() {
 
     let tree_config = TreeConfig {
         initial_state: BoardState::Turn,
-        starting_pot: 60,
-        effective_stack: 970,
+        starting_pot: 60.0,
+        effective_stack: 970.0,
         river_bet_sizes: [("50%", "").try_into().unwrap(), Default::default()],
         ..Default::default()
     };
@@ -354,8 +354,8 @@ fn one_raise_all_range_with_river() {
 
     let tree_config = TreeConfig {
         initial_state: BoardState::River,
-        starting_pot: 60,
-        effective_stack: 970,
+        starting_pot: 60.0,
+        effective_stack: 970.0,
         river_bet_sizes: [("50%", "").try_into().unwrap(), Default::default()],
         ..Default::default()
     };
@@ -446,8 +446,8 @@ fn always_win() {
     };
 
     let tree_config = TreeConfig {
-        starting_pot: 60,
-        effective_stack: 970,
+        starting_pot: 60.0,
+        effective_stack: 970.0,
         ..Default::default()
     };
 
@@ -505,8 +505,8 @@ fn always_win_raked() {
     };
 
     let tree_config = TreeConfig {
-        starting_pot: 60,
-        effective_stack: 970,
+        starting_pot: 60.0,
+        effective_stack: 970.0,
         rake_rate: 0.05,
         rake_cap: 10.0,
         ..Default::default()
@@ -558,8 +558,8 @@ fn always_lose() {
     };
 
     let tree_config = TreeConfig {
-        starting_pot: 60,
-        effective_stack: 970,
+        starting_pot: 60.0,
+        effective_stack: 970.0,
         ..Default::default()
     };
 
@@ -594,8 +594,8 @@ fn always_lose_raked() {
     };
 
     let tree_config = TreeConfig {
-        starting_pot: 60,
-        effective_stack: 970,
+        starting_pot: 60.0,
+        effective_stack: 970.0,
         rake_rate: 0.05,
         rake_cap: 10.0,
         ..Default::default()
@@ -626,8 +626,8 @@ fn always_tie() {
     };
 
     let tree_config = TreeConfig {
-        starting_pot: 60,
-        effective_stack: 970,
+        starting_pot: 60.0,
+        effective_stack: 970.0,
         ..Default::default()
     };
 
@@ -660,8 +660,8 @@ fn always_tie_raked() {
     };
 
     let tree_config = TreeConfig {
-        starting_pot: 60,
-        effective_stack: 970,
+        starting_pot: 60.0,
+        effective_stack: 970.0,
         rake_rate: 0.05,
         rake_cap: 10.0,
         ..Default::default()
@@ -692,8 +692,8 @@ fn no_assignment() {
     };
 
     let tree_config = TreeConfig {
-        starting_pot: 60,
-        effective_stack: 970,
+        starting_pot: 60.0,
+        effective_stack: 970.0,
         ..Default::default()
     };
 
@@ -713,8 +713,8 @@ fn remove_lines() {
 
     // simple tree: force checks on flop, and only use 1/2 pot bets on turn and river
     let tree_config = TreeConfig {
-        starting_pot: 60,
-        effective_stack: 970,
+        starting_pot: 60.0,
+        effective_stack: 970.0,
         turn_bet_sizes: [
             BetSizeOptions::try_from(("50%", "")).unwrap(),
             Default::default(),
@@ -740,10 +740,10 @@ fn remove_lines() {
             Action::Check,
             Action::Check,
             Action::Chance(2),
-            Action::Bet(30),
+            Action::Bet(30.0),
             Action::Call,
             Action::Chance(3),
-            Action::Bet(60),
+            Action::Bet(60.0),
         ],
     ];
 
@@ -754,13 +754,13 @@ fn remove_lines() {
 
     // check that the turn line is removed
     game.apply_history(&[0, 0, 2]);
-    assert_eq!(game.available_actions(), vec![Action::Bet(30)]);
+    assert_eq!(game.available_actions(), vec![Action::Bet(30.0)]);
 
     // check that other turn lines are correct
     game.apply_history(&[0, 0, 3]);
     assert_eq!(
         game.available_actions(),
-        vec![Action::Check, Action::Bet(30)]
+        vec![Action::Check, Action::Bet(30.0)]
     );
 
     // check that the river line is removed
@@ -771,13 +771,13 @@ fn remove_lines() {
     game.apply_history(&[0, 0, 2, 0, 1, 4]);
     assert_eq!(
         game.available_actions(),
-        vec![Action::Check, Action::Bet(60)]
+        vec![Action::Check, Action::Bet(60.0)]
     );
 
     game.apply_history(&[0, 0, 3, 1, 1, 4]);
     assert_eq!(
         game.available_actions(),
-        vec![Action::Check, Action::Bet(60)]
+        vec![Action::Check, Action::Bet(60.0)]
     );
 
     // check that `solve()` does not crash
@@ -796,8 +796,8 @@ fn isomorphism_monotone() {
     };
 
     let tree_config = TreeConfig {
-        starting_pot: 100,
-        effective_stack: 100,
+        starting_pot: 100.0,
+        effective_stack: 100.0,
         ..Default::default()
     };
 
@@ -858,8 +858,8 @@ fn node_locking() {
 
     let tree_config = TreeConfig {
         initial_state: BoardState::River,
-        starting_pot: 20,
-        effective_stack: 10,
+        starting_pot: 20.0,
+        effective_stack: 10.0,
         river_bet_sizes: [("a", "").try_into().unwrap(), ("a", "").try_into().unwrap()],
         ..Default::default()
     };
@@ -919,8 +919,8 @@ fn node_locking_partial() {
 
     let tree_config = TreeConfig {
         initial_state: BoardState::River,
-        starting_pot: 10,
-        effective_stack: 10,
+        starting_pot: 10.0,
+        effective_stack: 10.0,
         river_bet_sizes: [("a", "").try_into().unwrap(), ("a", "").try_into().unwrap()],
         ..Default::default()
     };
@@ -959,8 +959,8 @@ fn node_locking_isomorphism() {
     };
 
     let tree_config = TreeConfig {
-        starting_pot: 10,
-        effective_stack: 10,
+        starting_pot: 10.0,
+        effective_stack: 10.0,
         river_bet_sizes: [("a", "").try_into().unwrap(), Default::default()],
         ..Default::default()
     };
@@ -1023,8 +1023,8 @@ fn set_bunching_effect() {
 
     let tree_config = TreeConfig {
         initial_state: BoardState::Turn,
-        starting_pot: 60,
-        effective_stack: 970,
+        starting_pot: 60.0,
+        effective_stack: 970.0,
         river_bet_sizes: [("50%", "").try_into().unwrap(), Default::default()],
         ..Default::default()
     };
@@ -1077,8 +1077,8 @@ fn set_bunching_effect_always_win() {
     };
 
     let tree_config = TreeConfig {
-        starting_pot: 60,
-        effective_stack: 970,
+        starting_pot: 60.0,
+        effective_stack: 970.0,
         ..Default::default()
     };
 
@@ -1154,8 +1154,8 @@ fn solve_pio_preset_normal() {
     };
 
     let tree_config = TreeConfig {
-        starting_pot: 180,
-        effective_stack: 910,
+        starting_pot: 180.0,
+        effective_stack: 910.0,
         flop_bet_sizes: [
             ("52%", "45%").try_into().unwrap(),
             ("52%", "45%").try_into().unwrap(),
@@ -1209,8 +1209,8 @@ fn solve_pio_preset_raked() {
     };
 
     let tree_config = TreeConfig {
-        starting_pot: 180,
-        effective_stack: 910,
+        starting_pot: 180.0,
+        effective_stack: 910.0,
         rake_rate: 0.05,
         rake_cap: 30.0,
         flop_bet_sizes: [

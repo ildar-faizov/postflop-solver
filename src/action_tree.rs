@@ -1,6 +1,7 @@
 use crate::bet_size::*;
 use crate::card::*;
 use crate::mutex_like::*;
+use std::cmp::Ordering;
 
 #[cfg(feature = "bincode")]
 use bincode::{Decode, Encode};
@@ -14,7 +15,7 @@ pub(crate) const PLAYER_TERMINAL_FLAG: u8 = 8;
 pub(crate) const PLAYER_FOLD_FLAG: u8 = 24;
 
 /// Available actions of the postflop game.
-#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, Clone, Copy, Default, PartialEq, PartialOrd)]
 #[cfg_attr(feature = "bincode", derive(Decode, Encode))]
 pub enum Action {
     /// (Default value)
@@ -31,13 +32,13 @@ pub enum Action {
     Call,
 
     /// Bet action with a specified amount.
-    Bet(i32),
+    Bet(f64),
 
     /// Raise action with a specified amount.
-    Raise(i32),
+    Raise(f64),
 
     /// All-in action with a specified amount.
-    AllIn(i32),
+    AllIn(f64),
 
     /// Chance action with a card ID, i.e., the dealing of a turn or river card.
     Chance(Card),
@@ -65,8 +66,8 @@ pub enum BoardState {
 ///
 /// let tree_config = TreeConfig {
 ///     initial_state: BoardState::Turn,
-///     starting_pot: 200,
-///     effective_stack: 900,
+///     starting_pot: 200.,
+///     effective_stack: 900.,
 ///     rake_rate: 0.05,
 ///     rake_cap: 30.0,
 ///     flop_bet_sizes: Default::default(),
@@ -86,10 +87,10 @@ pub struct TreeConfig {
     pub initial_state: BoardState,
 
     /// Starting pot size. Must be greater than `0`.
-    pub starting_pot: i32,
+    pub starting_pot: f64,
 
     /// Initial effective stack. Must be greater than `0`.
-    pub effective_stack: i32,
+    pub effective_stack: f64,
 
     /// Rake rate. Must be between `0.0` and `1.0`, inclusive.
     pub rake_rate: f64,
@@ -151,7 +152,7 @@ pub struct ActionTree {
 pub(crate) struct ActionTreeNode {
     pub(crate) player: u8,
     pub(crate) board_state: BoardState,
-    pub(crate) amount: i32,
+    pub(crate) amount: f64,
     pub(crate) actions: Vec<Action>,
     pub(crate) children: Vec<MutexLike<ActionTreeNode>>,
 }
@@ -161,8 +162,8 @@ struct BuildTreeInfo {
     num_bets: i32,
     allin_flag: bool,
     oop_call_flag: bool,
-    stack: [i32; 2],
-    prev_amount: i32,
+    stack: [f64; 2],
+    prev_amount: f64,
 }
 
 type EjectedActionTree = (
@@ -372,7 +373,7 @@ impl ActionTree {
 
     /// Returns the total bet amount of each player (OOP, IP).
     #[inline]
-    pub fn total_bet_amount(&self) -> [i32; 2] {
+    pub fn total_bet_amount(&self) -> [f64; 2] {
         let info = BuildTreeInfo::new(self.config.effective_stack);
         self.total_bet_amount_recursive(&self.root.lock(), &self.history, info)
     }
@@ -414,14 +415,14 @@ impl ActionTree {
     /// Checks the configuration.
     #[inline]
     fn check_config(config: &TreeConfig) -> Result<(), String> {
-        if config.starting_pot <= 0 {
+        if config.starting_pot <= 0.0 {
             return Err(format!(
                 "Starting pot must be positive: {}",
                 config.starting_pot
             ));
         }
 
-        if config.effective_stack <= 0 {
+        if config.effective_stack <= 0.0 {
             return Err(format!(
                 "Effective stack must be positive: {}",
                 config.effective_stack
@@ -532,14 +533,14 @@ impl ActionTree {
         let prev_amount = info.prev_amount;
         let to_call = player_stack - opponent_stack;
 
-        let pot = self.config.starting_pot + 2 * (node.amount + to_call);
+        let pot = self.config.starting_pot + 2.0 * (node.amount + to_call);
         let max_amount = opponent_stack + prev_amount;
-        let min_amount = (prev_amount + to_call).clamp(1, max_amount);
+        let min_amount = (prev_amount + to_call).clamp(1.0, max_amount);
 
-        let spr_after_call = opponent_stack as f64 / pot as f64;
+        let spr_after_call = opponent_stack / pot;
         let compute_geometric = |num_streets: i32, max_ratio: f64| {
             let ratio = ((2.0 * spr_after_call + 1.0).powf(1.0 / num_streets as f64) - 1.0) / 2.0;
-            (pot as f64 * ratio.min(max_ratio)).round() as i32
+            pot * ratio.min(max_ratio)
         };
 
         let (bet_options, donk_options, num_remaining_streets) = match node.board_state {
@@ -565,7 +566,7 @@ impl ActionTree {
             for &donk_size in &donk_options.as_ref().unwrap().donk {
                 match donk_size {
                     BetSize::PotRelative(ratio) => {
-                        let amount = (pot as f64 * ratio).round() as i32;
+                        let amount = pot as f64 * ratio;
                         actions.push(Action::Bet(amount));
                     }
                     BetSize::PrevBetRelative(_) => panic!("Unexpected `PrevBetRelative`"),
@@ -583,7 +584,7 @@ impl ActionTree {
             }
 
             // all-in
-            if max_amount <= (pot as f64 * self.config.add_allin_threshold).round() as i32 {
+            if max_amount <= pot * self.config.add_allin_threshold {
                 actions.push(Action::AllIn(max_amount));
             }
         } else if matches!(
@@ -597,7 +598,7 @@ impl ActionTree {
             for &bet_size in &bet_options[player as usize].bet {
                 match bet_size {
                     BetSize::PotRelative(ratio) => {
-                        let amount = (pot as f64 * ratio).round() as i32;
+                        let amount = pot * ratio;
                         actions.push(Action::Bet(amount));
                     }
                     BetSize::PrevBetRelative(_) => panic!("Unexpected `PrevBetRelative`"),
@@ -615,7 +616,7 @@ impl ActionTree {
             }
 
             // all-in
-            if max_amount <= (pot as f64 * self.config.add_allin_threshold).round() as i32 {
+            if max_amount <= pot * self.config.add_allin_threshold {
                 actions.push(Action::AllIn(max_amount));
             }
         } else {
@@ -630,11 +631,11 @@ impl ActionTree {
                 for &bet_size in &bet_options[player as usize].raise {
                     match bet_size {
                         BetSize::PotRelative(ratio) => {
-                            let amount = prev_amount + (pot as f64 * ratio).round() as i32;
+                            let amount = prev_amount + pot * ratio;
                             actions.push(Action::Raise(amount));
                         }
                         BetSize::PrevBetRelative(ratio) => {
-                            let amount = (prev_amount as f64 * ratio).round() as i32;
+                            let amount = prev_amount * ratio;
                             actions.push(Action::Raise(amount));
                         }
                         BetSize::Additive(adder, raise_cap) => {
@@ -655,17 +656,17 @@ impl ActionTree {
                 }
 
                 // all-in
-                let allin_threshold = pot as f64 * self.config.add_allin_threshold;
-                if max_amount <= prev_amount + allin_threshold.round() as i32 {
+                let allin_threshold = pot * self.config.add_allin_threshold;
+                if max_amount <= prev_amount + allin_threshold {
                     actions.push(Action::AllIn(max_amount));
                 }
             }
         }
 
-        let is_above_threshold = |amount: i32| {
+        let is_above_threshold = |amount: f64| {
             let new_amount_diff = amount - prev_amount;
-            let new_pot = pot + 2 * new_amount_diff;
-            let threshold = (new_pot as f64 * self.config.force_allin_threshold).round() as i32;
+            let new_pot = pot + 2.0 * new_amount_diff;
+            let threshold = new_pot * self.config.force_allin_threshold;
             max_amount <= amount + threshold
         };
 
@@ -819,7 +820,7 @@ impl ActionTree {
         let to_call = player_stack - opponent_stack;
 
         let max_amount = opponent_stack + prev_amount;
-        let min_amount = (prev_amount + to_call).clamp(1, max_amount);
+        let min_amount = (prev_amount + to_call).clamp(1.0, max_amount);
 
         let mut is_replaced = false;
         let action = match action {
@@ -953,7 +954,7 @@ impl ActionTree {
         node: &ActionTreeNode,
         line: &[Action],
         info: BuildTreeInfo,
-    ) -> [i32; 2] {
+    ) -> [f64; 2] {
         if line.is_empty() || node.is_terminal() {
             let stack = self.config.effective_stack;
             return [stack - info.stack[0], stack - info.stack[1]];
@@ -989,14 +990,14 @@ impl ActionTreeNode {
 
 impl BuildTreeInfo {
     #[inline]
-    fn new(stack: i32) -> Self {
+    fn new(stack: f64) -> Self {
         Self {
             prev_action: Action::None,
             num_bets: 0,
             allin_flag: false,
             oop_call_flag: false,
             stack: [stack, stack],
-            prev_amount: 0,
+            prev_amount: 0.0,
         }
     }
 
@@ -1016,7 +1017,7 @@ impl BuildTreeInfo {
                 num_bets = 0;
                 oop_call_flag = player == PLAYER_OOP;
                 stack[player as usize] = stack[player as usize ^ 1];
-                prev_amount = 0;
+                prev_amount = 0.0;
             }
             Action::Bet(amount) | Action::Raise(amount) | Action::AllIn(amount) => {
                 let to_call = stack[player as usize] - stack[player as usize ^ 1];
@@ -1064,22 +1065,22 @@ fn count_num_action_nodes_recursive(node: &ActionTreeNode, street: usize, count:
     }
 }
 
-fn merge_bet_actions(actions: Vec<Action>, pot: i32, offset: i32, param: f64) -> Vec<Action> {
+fn merge_bet_actions(actions: Vec<Action>, pot: f64, offset: f64, param: f64) -> Vec<Action> {
     const EPS: f64 = 1e-12;
 
     let get_amount = |action: Action| match action {
         Action::Bet(amount) | Action::Raise(amount) | Action::AllIn(amount) => amount,
-        _ => -1,
+        _ => -1.0,
     };
 
-    let mut cur_amount = i32::MAX;
+    let mut cur_amount = f64::MAX;
     let mut ret = Vec::new();
 
     for &action in actions.iter().rev() {
         let amount = get_amount(action);
-        if amount > 0 {
-            let ratio = (amount - offset) as f64 / pot as f64;
-            let cur_ratio = (cur_amount - offset) as f64 / pot as f64;
+        if amount > 0.0 {
+            let ratio = (amount - offset) / pot;
+            let cur_ratio = (cur_amount - offset) as f64 / pot;
             let threshold_ratio = (cur_ratio - param) / (1.0 + param);
             if ratio < threshold_ratio * (1.0 - EPS) {
                 ret.push(action);
@@ -1092,4 +1093,33 @@ fn merge_bet_actions(actions: Vec<Action>, pot: i32, offset: i32, param: f64) ->
 
     ret.reverse();
     ret
+}
+
+impl Eq for Action {}
+
+impl Ord for Action {
+    fn cmp(&self, other: &Self) -> Ordering {
+        match (self, other) {
+            (Action::Bet(v1), Action::Bet(v2)) => v1.total_cmp(v2),
+            (Action::Raise(v1), Action::Raise(v2)) => v1.total_cmp(v2),
+            (Action::AllIn(v1), Action::AllIn(v2)) => v1.total_cmp(v2),
+            (Action::Chance(v1), Action::Chance(v2)) => v1.cmp(v2),
+            (s, t) => s.order().cmp(&t.order()),
+        }
+    }
+}
+
+impl Action {
+    fn order(&self) -> u8 {
+        match self {
+            Action::None => 0,
+            Action::Fold => 1,
+            Action::Check => 2,
+            Action::Call => 3,
+            Action::Bet(_) => 4,
+            Action::Raise(_) => 5,
+            Action::AllIn(_) => 6,
+            Action::Chance(_) => 7,
+        }
+    }
 }

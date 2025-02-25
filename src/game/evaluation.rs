@@ -19,7 +19,7 @@ impl PostFlopGame {
         player: usize,
         cfreach: &[f32],
     ) {
-        let pot = (self.tree_config.starting_pot + 2 * node.amount) as f64;
+        let pot = self.tree_config.starting_pot + 2.0 * node.amount;
         let half_pot = 0.5 * pot;
         let rake = min(pot * self.tree_config.rake_rate, self.tree_config.rake_cap);
         let amount_win = (half_pot - rake) / self.num_combinations;
@@ -259,7 +259,7 @@ impl PostFlopGame {
         player: usize,
         cfreach: &[f32],
     ) {
-        let pot = (self.tree_config.starting_pot + 2 * node.amount) as f64;
+        let pot = self.tree_config.starting_pot + 2.0 * node.amount;
         let half_pot = 0.5 * pot;
         let rake = min(pot * self.tree_config.rake_rate, self.tree_config.rake_cap);
         let amount_win = ((half_pot - rake) / self.bunching_num_combinations) as f32;

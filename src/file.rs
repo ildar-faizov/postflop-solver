@@ -280,8 +280,8 @@ mod tests {
         };
 
         let tree_config = TreeConfig {
-            starting_pot: 60,
-            effective_stack: 970,
+            starting_pot: 60.0,
+            effective_stack: 970.0,
             flop_bet_sizes: [("50%", "").try_into().unwrap(), Default::default()],
             turn_bet_sizes: [("50%", "").try_into().unwrap(), Default::default()],
             ..Default::default()
@@ -340,8 +340,8 @@ mod tests {
         };
 
         let tree_config = TreeConfig {
-            starting_pot: 60,
-            effective_stack: 970,
+            starting_pot: 60.0,
+            effective_stack: 970.0,
             flop_bet_sizes: [("50%", "").try_into().unwrap(), Default::default()],
             turn_bet_sizes: [("50%", "").try_into().unwrap(), Default::default()],
             ..Default::default()

@@ -20,8 +20,8 @@ fn main() {
 
     let tree_config = TreeConfig {
         initial_state: BoardState::Turn, // must match `card_config`
-        starting_pot: 200,
-        effective_stack: 900,
+        starting_pot: 200.0,
+        effective_stack: 900.0,
         rake_rate: 0.0,
         rake_cap: 0.0,
         flop_bet_sizes: [bet_sizes.clone(), bet_sizes.clone()], // [OOP, IP]

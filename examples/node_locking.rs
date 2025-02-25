@@ -15,8 +15,8 @@ fn normal_node_locking() {
 
     let tree_config = TreeConfig {
         initial_state: BoardState::River,
-        starting_pot: 20,
-        effective_stack: 10,
+        starting_pot: 20.0,
+        effective_stack: 10.0,
         river_bet_sizes: [("a", "").try_into().unwrap(), ("a", "").try_into().unwrap()],
         ..Default::default()
     };
@@ -66,8 +66,8 @@ fn partial_node_locking() {
 
     let tree_config = TreeConfig {
         initial_state: BoardState::River,
-        starting_pot: 10,
-        effective_stack: 10,
+        starting_pot: 10.0,
+        effective_stack: 10.0,
         river_bet_sizes: [("a", "").try_into().unwrap(), ("a", "").try_into().unwrap()],
         ..Default::default()
     };

@@ -29,7 +29,7 @@ use bincode::{Decode, Encode};
 ///     bet_size.bet,
 ///     vec![
 ///         PotRelative(0.5),
-///         Additive(100, 0),
+///         Additive(100.0, 0),
 ///         Geometric(2, f64::INFINITY),
 ///         AllIn
 ///    ]
@@ -69,7 +69,7 @@ pub enum BetSize {
     /// Constant bet size of the first element with a raise cap of the second element.
     ///
     /// If the second element is `0`, there is no raise cap.
-    Additive(i32, i32),
+    Additive(f64, i32),
 
     /// Geometric bet size for `i32` streets with maximum pot-relative size of `f64`.
     ///
@@ -203,7 +203,7 @@ fn bet_size_from_str(s: &str, is_raise: bool) -> Result<BetSize, String> {
         if split.next().is_some() {
             Err(err_msg)
         } else {
-            Ok(BetSize::Additive(add as i32, cap))
+            Ok(BetSize::Additive(add, cap))
         }
     } else if s_lower.contains('e') {
         // Geometric
@@ -263,10 +263,10 @@ mod tests {
             ("112.5%", PotRelative(1.125)),
             ("1.001x", PrevBetRelative(1.001)),
             ("3.5X", PrevBetRelative(3.5)),
-            ("0c", Additive(0, 0)),
-            ("123C", Additive(123, 0)),
-            ("0c1r", Additive(0, 1)),
-            ("100C100R", Additive(100, 100)),
+            ("0c", Additive(0.0, 0)),
+            ("123C", Additive(123.0, 0)),
+            ("0c1r", Additive(0.0, 1)),
+            ("100C100R", Additive(100.0, 100)),
             ("e", Geometric(0, f64::INFINITY)),
             ("E", Geometric(0, f64::INFINITY)),
             ("2e", Geometric(2, f64::INFINITY)),
@@ -306,7 +306,7 @@ mod tests {
                 "50c, e, a,",
                 "25%, 2.5x, e200%",
                 BetSizeOptions {
-                    bet: vec![Additive(50, 0), Geometric(0, f64::INFINITY), AllIn],
+                    bet: vec![Additive(50.0, 0), Geometric(0, f64::INFINITY), AllIn],
                     raise: vec![PotRelative(0.25), PrevBetRelative(2.5), Geometric(0, 2.0)],
                 },
             ),
@@ -335,7 +335,7 @@ mod tests {
             (
                 "50c, e, a,",
                 DonkSizeOptions {
-                    donk: vec![Additive(50, 0), Geometric(0, f64::INFINITY), AllIn],
+                    donk: vec![Additive(50.0, 0), Geometric(0, f64::INFINITY), AllIn],
                 },
             ),
         ];

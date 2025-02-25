@@ -26,7 +26,7 @@ impl PostFlopGame {
         self.turn_swapped_suit = None;
         self.turn_swap = None;
         self.river_swap = None;
-        self.total_bet_amount = [0, 0];
+        self.total_bet_amount = [0.0, 0.0];
 
         self.weights[0].copy_from_slice(&self.initial_weights[0]);
         self.weights[1].copy_from_slice(&self.initial_weights[1]);
@@ -406,7 +406,7 @@ impl PostFlopGame {
                 Action::Bet(amount) | Action::Raise(amount) | Action::AllIn(amount) => {
                     let prev_bet_amount = match node.prev_action {
                         Action::Bet(a) | Action::Raise(a) | Action::AllIn(a) => a,
-                        _ => 0,
+                        _ => 0.0,
                     };
                     let to_call = self.total_bet_amount[player ^ 1] - self.total_bet_amount[player];
                     self.total_bet_amount[player] += amount - prev_bet_amount + to_call;
@@ -777,7 +777,7 @@ impl PostFlopGame {
 
         let starting_pot = self.tree_config.starting_pot;
         let total_bet_amount = self.total_bet_amount();
-        let bias = (total_bet_amount[player] - total_bet_amount[player ^ 1]).max(0);
+        let bias = (total_bet_amount[player] - total_bet_amount[player ^ 1]).max(0.0);
 
         ret.chunks_exact_mut(num_hands)
             .enumerate()
@@ -848,7 +848,7 @@ impl PostFlopGame {
 
     /// Returns the total bet amount of each player (OOP, IP).
     #[inline]
-    pub fn total_bet_amount(&self) -> [i32; 2] {
+    pub fn total_bet_amount(&self) -> [f64; 2] {
         self.total_bet_amount
     }
 

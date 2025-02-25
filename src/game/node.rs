@@ -213,7 +213,7 @@ impl Default for PostFlopNode {
             turn: NOT_DEALT,
             river: NOT_DEALT,
             is_locked: false,
-            amount: 0,
+            amount: 0.0,
             children_offset: 0,
             num_children: 0,
             num_elements_ip: 0,
